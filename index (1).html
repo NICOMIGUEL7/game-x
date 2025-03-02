@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Hello, World!</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+      <h1 class="title">Hello World! </h1>
+      <p id="currentTime"></p>
+      <script src="script.js"></script>
+  </body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adivinhe o Número</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .message {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Adivinhe o Número</h1>
+        <p>Escolha um nível de dificuldade ou crie o seu próprio:</p>
+        <button onclick="startGame('easy')">Fácil (1-10)</button>
+        <button onclick="startGame('medium')">Médio (1-50)</button>
+        <button onclick="startGame('hard')">Difícil (1-100)</button>
+        <button onclick="customRange()">Criar Intervalo Personalizado</button>
+
+        <div id="customRange" style="display: none;">
+            <p>Defina seu intervalo personalizado:</p>
+            <input type="number" id="minInput" placeholder="Número mínimo" required>
+            <input type="number" id="maxInput" placeholder="Número máximo" required>
+            <button onclick="startCustomGame()">Iniciar Jogo</button>
+        </div>
+
+        <div id="game" style="display: none;">
+            <p>Digite seu palpite:</p>
+            <input type="number" id="guessInput" min="1">
+            <button onclick="checkGuess()">Enviar</button>
+            <button onclick="resetGame()">Reiniciar</button>
+            <p class="message" id="message"></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
