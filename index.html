@@ -10,10 +10,13 @@
       <script src="script.js"></script>
   </body>
 </html><!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <!-- Adicionado Content-Security-Policy para mitigar XSS -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';">
     <title>Adivinhe o Número</title>
     <style>
         body {
@@ -38,6 +41,8 @@
             padding: 10px;
             margin: 5px;
             font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
         }
         button {
             background: #007bff;
@@ -57,24 +62,159 @@
         .error {
             color: red;
         }
+        .success {
+            color: green;
+        }
+        #currentTime {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 20px auto;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Adivinhe o Número</h1>
-        <p>Escolha um nível de dificuldade:</p>
-        <button onclick="startGame('easy')">Fácil (1-10)</button>
-        <button onclick="startGame('medium')">Médio (1-50)</button>
-        <button onclick="startGame('hard')">Difícil (1-100)</button>
+        <p>Escolha um nível de dificuldade ou crie o seu próprio:</p>
+        <button data-difficulty="easy">Fácil (1-10)</button>
+        <button data-difficulty="medium">Médio (1-50)</button>
+        <button data-difficulty="hard">Difícil (1-100)</button>
+        <button id="customRangeBtn">Criar Intervalo Personalizado</button>
+
+        <div id="customRange" style="display: none;">
+            <p>Defina seu intervalo personalizado:</p>
+            <input type="number" id="minInput" placeholder="Número mínimo" aria-label="Número mínimo" required>
+            <input type="number" id="maxInput" placeholder="Número máximo" aria-label="Número máximo" required>
+            <button id="startCustomGameBtn">Iniciar Jogo</button>
+        </div>
 
         <div id="game" style="display: none;">
             <p>Digite seu palpite:</p>
-            <input type="number" id="guessInput" min="1">
-            <button onclick="checkGuess()">Enviar</button>
-            <p class="message" id="message"></p>
+            <input type="number" id="guessInput" aria-label="Seu palpite">
+            <button id="checkGuessBtn">Enviar</button>
+            <button id="resetGameBtn">Reiniciar</button>
+            <p class="message" id="message" aria-live="polite"></p>
         </div>
+
+        <div id="currentTime" aria-live="polite"></div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            // Variáveis de estado do jogo encapsuladas
+            const gameState = {
+                minRange: 0,
+                maxRange: 0,
+                randomNumber: 0,
+                attempts: 0
+            };
+
+            // Função segura para atualizar o DOM
+            const setElementText = (id, text) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = text;
+                }
+            };
+
+            // Função segura para alternar visibilidade
+            const toggleDisplay = (id, display) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.style.display = display;
+                }
+            };
+
+            // Clock functionality
+            const showTime = () => {
+                setElementText('currentTime', new Date().toUTCString());
+            };
+            showTime();
+            setInterval(showTime, 1000);
+
+            // Validação de entrada
+            const sanitizeNumberInput = (value, min, max) => {
+                const num = parseInt(value, 10);
+                return isNaN(num) || num < min || num > max ? null : num;
+            };
+
+            // Iniciar jogo com dificuldade predefinida
+            const startGame = (min, max) => {
+                gameState.minRange = min;
+                gameState.maxRange = max;
+                gameState.randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+                gameState.attempts = 0;
+                toggleDisplay('game', 'block');
+                toggleDisplay('customRange', 'none');
+                setElementText('message', `Adivinhe um número entre ${min} e ${max}!`);
+                document.getElementById('guessInput').value = '';
+            };
+
+            // Configurar eventos de dificuldade
+            document.querySelectorAll('button[data-difficulty]').forEach(button => {
+                button.addEventListener('click', () => {
+                    const difficulty = button.getAttribute('data-difficulty');
+                    switch (difficulty) {
+                        case 'easy': startGame(1, 10); break;
+                        case 'medium': startGame(1, 50); break;
+                        case 'hard': startGame(1, 100); break;
+                    }
+                });
+            });
+
+            // Mostrar intervalo personalizado
+            document.getElementById('customRangeBtn').addEventListener('click', () => {
+                toggleDisplay('customRange', 'block');
+                toggleDisplay('game', 'none');
+            });
+
+            // Iniciar jogo personalizado
+            document.getElementById('startCustomGameBtn').addEventListener('click', () => {
+                const min = sanitizeNumberInput(document.getElementById('minInput').value, -Infinity, Infinity);
+                const max = sanitizeNumberInput(document.getElementById('maxInput').value, -Infinity, Infinity);
+                if (min === null || max === null || min >= max) {
+                    alert('Por favor, insira um intervalo válido (mínimo < máximo).');
+                    return;
+                }
+                startGame(min, max);
+            });
+
+            // Verificar palpite
+            document.getElementById('checkGuessBtn').addEventListener('click', () => {
+                const guessInput = document.getElementById('guessInput');
+                const guess = sanitizeNumberInput(guessInput.value, gameState.minRange, gameState.maxRange);
+                gameState.attempts++;
+                const messageElement = document.getElementById('message');
+
+                if (guess === null) {
+                    messageElement.className = 'message error';
+                    setElementText('message', `Insira um número válido entre ${gameState.minRange} e ${gameState.maxRange}.`);
+                } else if (guess < gameState.randomNumber) {
+                    messageElement.className = 'message';
+                    setElementText('message', 'Muito baixo! Tente novamente.');
+                } else if (guess > gameState.randomNumber) {
+                    messageElement.className = 'message';
+                    setElementText('message', 'Muito alto! Tente novamente.');
+                } else {
+                    messageElement.className = 'message success';
+                    setElementText('message', `Parabéns! Você acertou o número ${gameState.randomNumber} em ${gameState.attempts} tentativas!`);
+                }
+                guessInput.value = ''; // Limpar entrada após cada tentativa
+            });
+
+            // Reiniciar jogo
+            document.getElementById('resetGameBtn').addEventListener('click', () => {
+                toggleDisplay('game', 'none');
+                toggleDisplay('customRange', 'none');
+                setElementText('message', '');
+            });
+        })();
+    </script>
 </body>
 </html>
